@@ -36,14 +36,14 @@ COPY desk/ ./desk/
 # white, black, mid, gradient, noise and the fixture. A broken image never ships.
 RUN python3 ghost_seal.py selftest
 
-# Storage. MOUNT A VOLUME HERE — without one, originals, sealed masters and the
-# audit trail vanish on the next deploy.
+# Storage. ATTACH A RAILWAY VOLUME AT /data (Docker's VOLUME instruction is not
+# supported on Railway's builder) — without one, originals, sealed masters and
+# the audit trail vanish on the next deploy.
 ENV DATA_DIR=/data \
     GHOST_SEAL_MANIFEST=/data/manifest.jsonl \
     PYTHONUNBUFFERED=1 \
     PORT=8080
 RUN mkdir -p /data
-VOLUME ["/data"]
 
 EXPOSE 8080
 
