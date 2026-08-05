@@ -1,0 +1,46 @@
+{
+  "asset": "seal_master.png",
+  "resolution": 2048,
+  "ring_text": "AI-GENERATED IMAGE  \u00b7  ",
+  "geometry": {
+    "outer_rule": {
+      "inset": 0.012,
+      "width": 0.0083,
+      "value": 255
+    },
+    "second_rule": {
+      "inset": 0.062,
+      "width": 0.0056,
+      "value": 210
+    },
+    "inner_rule": {
+      "inset": 0.285,
+      "width": 0.0056,
+      "value": 190
+    },
+    "ticks": {
+      "count": 60,
+      "r0": 0.325,
+      "r1": 0.425,
+      "width": 0.0039,
+      "value": 120
+    },
+    "monogram": {
+      "text": "AI",
+      "size": 0.235,
+      "value": 255
+    },
+    "ring": {
+      "size": 0.095,
+      "radius": 0.375,
+      "value": 255,
+      "baseline": 0.03
+    }
+  },
+  "mask_sha256": "6a6089230d3904f1c4357314102e47fe30b54c1ee386324530664d84c7f511e2",
+  "fonts": {
+    "Inter-SemiBold.ttf": "0dc98e8aa59585394880f25ab89e6d915ad5134522e961b046ca51fad3a18255",
+    "Inter-Bold.ttf": "0cb1bc1335372d9e3a0cf6f5311c7cce87af90d2a777fdeec18be605a2a70bc1"
+  },
+  "pillow": "12.3.0"
+}

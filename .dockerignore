@@ -1,0 +1,11 @@
+.git
+.data
+demo/
+lib/
+lib_sealed/
+gatetest/
+inter/
+__pycache__/
+*.pyc
+manifest.jsonl
+doc/*.pdf

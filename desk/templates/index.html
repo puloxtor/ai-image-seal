@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ghost Seal Desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap"
+    />
+    <link rel="stylesheet" href="/static/desk.css" />
+  </head>
+  <body class="gsd">
+    <header class="gsd-bar">
+      <div class="gsd-shell gsd-bar-inner">
+        <div class="gsd-brand">
+          <span class="gsd-brand-name">Ghost Seal Desk</span>
+          <span class="gsd-brand-tag gsd-mono">Internal utility</span>
+        </div>
+        <dl class="gsd-bar-meta gsd-mono">
+          <div><dt>Standard</dt><dd>{{ spec.name }} 1.0.0</dd></div>
+          <div><dt>Mask</dt><dd>{{ mask[:10] }}…</dd></div>
+          <div><dt>Runtime</dt><dd>in-process, pinned</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <main>
+      <section class="gsd-shell gsd-hero">
+        <div>
+          <h1 class="gsd-display">Seal it<br />before<br />it <em>ships</em></h1>
+          <p class="gsd-hero-sub">
+            Hand over a master. It comes back carrying the carved disclosure seal in the
+            bottom-right corner and the machine-readable provenance inside the file, with the
+            measured relief written to the audit trail. The artwork outside the seal is
+            returned bit for bit.
+          </p>
+        </div>
+
+        {% if unlocked %}
+        <div>
+          <button class="gsd-drop" id="drop" type="button">
+            <span class="gsd-drop-watermark" aria-hidden="true">
+              <img src="/static/seal-master.png" alt="" />
+            </span>
+            <span class="gsd-drop-label gsd-mono" id="drop-label">DROP MASTERS HERE</span>
+            <span class="gsd-drop-hint">
+              PNG, JPEG, WebP or TIFF · up to {{ max_mb }} MB each
+            </span>
+            <span class="gsd-drop-hint">
+              Masters only. Derive crops and thumbnails from the sealed file.
+            </span>
+          </button>
+          <input id="picker" type="file" multiple hidden
+                 accept="image/png,image/jpeg,image/webp,image/tiff" />
+          <p class="gsd-flash gsd-mono" id="flash" hidden></p>
+        </div>
+        {% else %}
+        <form class="gsd-lock" method="post" action="/unlock">
+          <p class="gsd-mono" style="font-size: 11px; letter-spacing: 0.16em; margin: 0">
+            TEAM ACCESS
+          </p>
+          <p style="font-size: 13.5px; color: var(--muted); margin: 0">
+            The desk holds unsealed originals, so it is code-gated. Ask the platform owner for
+            the current code.
+          </p>
+          <div class="gsd-lock-row">
+            <input type="password" name="code" placeholder="access code" autocomplete="off" />
+            <button class="gsd-lock-submit" type="submit">Unlock →</button>
+          </div>
+          {% if error %}<p class="gsd-flash gsd-mono">{{ error }}</p>{% endif %}
+        </form>
+        {% endif %}
+      </section>
+
+      <div class="gsd-shell">
+        <dl class="gsd-readout gsd-mono">
+          <div><dt>Seal</dt><dd>{{ (spec.dia_frac * 100) | round(1) }}% short side</dd></div>
+          <div><dt>Relief</dt><dd>{{ spec.delta_L }} L*</dd></div>
+          <div><dt>Corner</dt><dd>bottom-right</dd></div>
+          <div><dt>Colour</dt><dd>none</dd></div>
+          <div><dt>Touched</dt><dd>0.10% of frame</dd></div>
+          <div><dt>Provenance</dt><dd>IPTC embedded</dd></div>
+        </dl>
+      </div>
+
+      {% if unlocked %}
+      <section class="gsd-shell gsd-section" id="queue-section">
+        <div class="gsd-queue-head">
+          <div>
+            <p class="gsd-eyebrow">Queue</p>
+            <h2 class="gsd-h2" id="queue-title" style="margin-bottom: 0">
+              Everything handed over is sealed
+            </h2>
+          </div>
+          <a class="gsd-export gsd-mono" href="/manifest.jsonl">Export manifest</a>
+        </div>
+        <div id="queue"></div>
+      </section>
+      {% endif %}
+
+      <section class="gsd-shell gsd-section">
+        <p class="gsd-eyebrow">Visibility bench</p>
+        <h2 class="gsd-h2">Why five. Drag it and watch the seal cross the threshold.</h2>
+        <p class="gsd-lede" style="margin-bottom: 34px">
+          Below about three L* the mark reads as a compression artifact, which is exactly the
+          accusation a disclosure cannot afford. Above about eight it starts drawing the eye
+          away from the product. The house value sits where an auditor can resolve the ring
+          microtext on inspection and a scrolling customer never registers it.
+        </p>
+
+        <div class="gsd-bench">
+          <div>
+            <div class="gsd-bench-stage">
+              <canvas id="bench" style="aspect-ratio: 1 / 1; background: #f2f1ec"></canvas>
+            </div>
+            <p class="gsd-bench-caption gsd-mono">
+              INSPECT VIEW · on a real master the seal is {{ (spec.dia_frac * 100) | round(1) }}% of the short side
+            </p>
+          </div>
+
+          <div>
+            <div class="gsd-control">
+              <div class="gsd-control-label">
+                <span>Ground</span><span class="gsd-mono" id="ground-value">paper</span>
+              </div>
+              <div class="gsd-grounds" id="grounds">
+                <button class="gsd-ground" data-ground="paper" data-active="true">paper</button>
+                <button class="gsd-ground" data-ground="white">255 white</button>
+                <button class="gsd-ground" data-ground="black">0 black</button>
+              </div>
+            </div>
+
+            <div class="gsd-control">
+              <div class="gsd-control-label">
+                <span>Relief strength</span>
+                <span class="gsd-mono" id="delta-value">{{ spec.delta_L }} L*</span>
+              </div>
+              <input class="gsd-slider" id="delta" type="range" min="1" max="12" step="0.5"
+                     value="{{ spec.delta_L }}" aria-label="Relief strength in CIE L star units" />
+              <div class="gsd-ticks gsd-mono">
+                <span>1.0 invisible, indefensible</span>
+                <span>5.0 house</span>
+                <span>12.0 costs the artwork</span>
+              </div>
+            </div>
+
+            <dl class="gsd-readout gsd-mono" style="border-top: 0">
+              <div><dt>Relief mode</dt><dd id="stat-mode">—</dd></div>
+              <div><dt>Max ΔL*</dt><dd id="stat-max">—</dd></div>
+              <div><dt>Mean ΔL*</dt><dd id="stat-mean">—</dd></div>
+              <div><dt>Chroma shift</dt><dd>0.00</dd></div>
+            </dl>
+
+            <p class="gsd-bench-caption" style="margin-top: 16px">
+              Preview only. It shares the mask, the CIELAB luminance-only relief and the
+              mode-selection rule with production, but every real seal on this host is applied
+              by the Python applier in this process, not by this canvas.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="gsd-shell gsd-section">
+        <p class="gsd-eyebrow">Specification</p>
+        <h2 class="gsd-h2">The house standard, as this service is configured.</h2>
+        <div class="gsd-spec">
+          <div>
+            <table class="gsd-table">
+              <thead>
+                <tr><th style="width: 44px">No.</th><th>Parameter</th><th>Value</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="gsd-mono">01</td><td>Placement</td><td class="gsd-mono">{{ spec.corner }}, margin {{ (spec.margin_frac * 100) | round(1) }}% of short side</td></tr>
+                <tr><td class="gsd-mono">02</td><td>Diameter</td><td class="gsd-mono">{{ (spec.dia_frac * 100) | round(1) }}% of short side, clamped {{ spec.dia_min }}-{{ spec.dia_max }} px</td></tr>
+                <tr><td class="gsd-mono">03</td><td>Relief</td><td class="gsd-mono">{{ spec.delta_L }} L* bipolar · {{ spec.delta_L_uni }} L* single-direction</td></tr>
+                <tr><td class="gsd-mono">04</td><td>Visibility floor</td><td class="gsd-mono">{{ spec.delta_floor }} L*</td></tr>
+                <tr><td class="gsd-mono">05</td><td>Colour</td><td class="gsd-mono">none, a* and b* unmodified</td></tr>
+                <tr><td class="gsd-mono">06</td><td>Minimum input</td><td class="gsd-mono">{{ spec.min_short_side }} px short side</td></tr>
+                <tr><td class="gsd-mono">07</td><td>Provenance</td><td class="gsd-mono">iptcExt:DigitalSourceType = trainedAlgorithmicMedia</td></tr>
+                <tr><td class="gsd-mono">08</td><td>Mask</td><td class="gsd-mono">{{ mask[:16] }}… checked at boot and per run</td></tr>
+              </tbody>
+            </table>
+
+            <ul class="gsd-limits">
+              <li><span aria-hidden="true">▲</span><span>Resized or re-cropped derivatives keep their metadata but may fall below the pixel-detection threshold. Derive from sealed masters.</span></li>
+              <li><span aria-hidden="true">▲</span><span>Extreme high-frequency texture can hide a 5 L* relief from re-detection. The relief is still applied and the metadata still discloses.</span></li>
+              <li><span aria-hidden="true">▲</span><span>Metadata is unsigned and strippable, and many platforms strip it on upload. C2PA signing is the answer if tamper evidence is required.</span></li>
+              <li><span aria-hidden="true">▲</span><span>CMYK input is converted to RGB and flagged in the manifest. Seal the RGB master and let prepress convert.</span></li>
+              <li><span aria-hidden="true">▲</span><span>This implements marking practice. Whether an asset triggers EU AI Act Art. 50 duties, and in which role, is a question for counsel.</span></li>
+            </ul>
+          </div>
+
+          <div class="gsd-evidence">
+            <figure>
+              <img src="/static/seal-crop-300.jpg" alt="The seal at 300% on a sealed asset" />
+              <figcaption class="gsd-mono">Seal at 300% · sealed master</figcaption>
+            </figure>
+            <figure>
+              <img src="/static/proof-grid.jpg" alt="The seal proofed on four grounds" />
+              <figcaption class="gsd-mono">Four grounds · relief intact on each</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="gsd-shell gsd-foot">
+        <p class="gsd-foot-note">
+          Masters only, one seal version in circulation, and the manifest kept forever. The
+          visible seal and the embedded provenance always ship together: one without the other
+          fails the standard. Storage lives on the mounted volume, so a redeploy without a
+          volume loses the originals and the audit trail.
+        </p>
+      </section>
+    </main>
+
+    <script src="/static/bench.js" defer></script>
+    {% if unlocked %}<script src="/static/desk.js" defer></script>{% endif %}
+  </body>
+</html>

@@ -1,0 +1,66 @@
+name: ghost-seal
+
+# Two jobs, and they are the whole governance story:
+#   guard    — the seal artwork cannot change without a visible, approved diff
+#   selftest — the seal still behaves identically on this runtime
+# Make both required checks on `main`, with CODEOWNERS on seal_master.png so a
+# brand + legal approval is needed to change the standard.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"   # weekly drift check: catches a base-image change
+
+jobs:
+  guard:
+    name: mask hash guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: seal_master.png must match every pinned hash
+        run: |
+          PINNED=6a6089230d3904f1c4357314102e47fe30b54c1ee386324530664d84c7f511e2
+          ACTUAL=$(sha256sum seal_master.png | cut -d' ' -f1)
+          echo "pinned: $PINNED"
+          echo "actual: $ACTUAL"
+          test "$ACTUAL" = "$PINNED" || {
+            echo "::error::seal_master.png changed. This is a HOUSE STANDARD change:"
+            echo "::error::re-pin the hash in seal_master.json, SKILL.md, doc/, this workflow,"
+            echo "::error::get brand + legal sign-off, then re-seal the library with --force."
+            exit 1; }
+          grep -q "$PINNED" seal_master.json || { echo "::error::seal_master.json not re-pinned"; exit 1; }
+          grep -q "$PINNED" doc/ghost-seal-spec.md || { echo "::error::spec doc not re-pinned"; exit 1; }
+
+  selftest:
+    name: determinism & non-destructiveness
+    runs-on: ubuntu-latest
+    container:
+      # Pin the runtime: LANCZOS output can differ across Pillow versions, and the
+      # whole promise is "identical seal everywhere". Bump this deliberately, never
+      # implicitly, and re-run the harness when you do.
+      image: ghcr.io/OWNER/ghost-seal:1.0.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: harness
+        run: python3 ghost_seal.py selftest
+      - name: reference asset is byte-stable
+        run: |
+          python3 ghost_seal.py apply tests/reference.png -o /tmp/a.png
+          python3 ghost_seal.py apply tests/reference.png -o /tmp/b.png --force
+          python3 - <<'EOF'
+          import numpy as np
+          from PIL import Image
+          a = np.asarray(Image.open('/tmp/a.png').convert('RGB'))
+          b = np.asarray(Image.open('/tmp/b.png').convert('RGB'))
+          assert np.array_equal(a, b), "seal is not deterministic on this runtime"
+          print("deterministic OK")
+          EOF
+      - name: publish gate works
+        run: |
+          mkdir -p /tmp/gate && cp tests/reference.png /tmp/gate/unsealed.png
+          if python3 verify_tree.py /tmp/gate; then
+            echo "::error::verify_tree passed an unsealed image"; exit 1
+          fi
+          echo "gate correctly rejects unsealed imagery"

@@ -1,0 +1,6 @@
+seal_master.png     @brand-lead @legal-counsel
+seal_master.json    @brand-lead @legal-counsel
+doc/                @brand-lead @legal-counsel
+ghost_seal.py       @platform-owner
+build_master.py     @platform-owner
+Dockerfile          @platform-owner
