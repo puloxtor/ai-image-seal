@@ -36,31 +36,29 @@ jobs:
   selftest:
     name: determinism & non-destructiveness
     runs-on: ubuntu-latest
-    container:
-      # Pin the runtime: LANCZOS output can differ across Pillow versions, and the
-      # whole promise is "identical seal everywhere". Bump this deliberately, never
-      # implicitly, and re-run the harness when you do.
-      image: ghcr.io/OWNER/ghost-seal:1.0.0
     steps:
       - uses: actions/checkout@v4
+      # Build the pinned runtime from this repo's Dockerfile, so CI exercises the
+      # exact image every other lane runs. Its build already runs the selftest.
+      - name: build pinned runtime
+        run: docker build -t ghost-seal:ci .
       - name: harness
-        run: python3 ghost_seal.py selftest
+        run: docker run --rm ghost-seal:ci selftest
       - name: reference asset is byte-stable
         run: |
-          python3 ghost_seal.py apply tests/reference.png -o /tmp/a.png
-          python3 ghost_seal.py apply tests/reference.png -o /tmp/b.png --force
-          python3 - <<'EOF'
+          docker run --rm -v "$PWD":/w ghost-seal:ci apply /w/tests/reference.png -o /w/a.png
+          docker run --rm -v "$PWD":/w ghost-seal:ci apply /w/tests/reference.png -o /w/b.png --force
+          docker run --rm -v "$PWD":/w --entrypoint python3 ghost-seal:ci -c "
           import numpy as np
           from PIL import Image
-          a = np.asarray(Image.open('/tmp/a.png').convert('RGB'))
-          b = np.asarray(Image.open('/tmp/b.png').convert('RGB'))
-          assert np.array_equal(a, b), "seal is not deterministic on this runtime"
-          print("deterministic OK")
-          EOF
+          a = np.asarray(Image.open('/w/a.png').convert('RGB'))
+          b = np.asarray(Image.open('/w/b.png').convert('RGB'))
+          assert np.array_equal(a, b), 'seal is not deterministic on this runtime'
+          print('deterministic OK')"
       - name: publish gate works
         run: |
-          mkdir -p /tmp/gate && cp tests/reference.png /tmp/gate/unsealed.png
-          if python3 verify_tree.py /tmp/gate; then
+          mkdir -p gate && cp tests/reference.png gate/unsealed.png
+          if docker run --rm -v "$PWD":/w --entrypoint python3 ghost-seal:ci verify_tree.py /w/gate; then
             echo "::error::verify_tree passed an unsealed image"; exit 1
           fi
           echo "gate correctly rejects unsealed imagery"

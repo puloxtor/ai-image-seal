@@ -1,6 +1,8 @@
-seal_master.png     @brand-lead @legal-counsel
-seal_master.json    @brand-lead @legal-counsel
-doc/                @brand-lead @legal-counsel
-ghost_seal.py       @platform-owner
-build_master.py     @platform-owner
-Dockerfile          @platform-owner
+# The seal artwork and its pinned hashes are a house standard: changing them
+# needs an approved review. Replace or add owners here when the team grows.
+seal_master.png     @puloxtor
+seal_master.json    @puloxtor
+doc/                @puloxtor
+ghost_seal.py       @puloxtor
+build_master.py     @puloxtor
+Dockerfile          @puloxtor
